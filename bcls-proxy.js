@@ -114,12 +114,12 @@ var BCLSPROXY = (function () {
      */
     http.createServer(function (req, res) {
         var body = "";
-        // the published version of this proxy accepts requests only from domains that include "brightcove.com"
+        // this version of this proxy accepts requests only from domains that include "localhost"
         // modify the following line to take requests from other domains
         // or remove the if block to accept requests from any domain (not recommended!)
-        if (req.headers.origin.indexOf("brightcove.com") < 0) {
+        if (req.headers.origin.indexOf("localhost") < 0) {
             res.writeHead(500);
-            res.end("Your request cannot be processed; this proxy only handles requests originating from Brightcove servers. If you would like to build your own version of this proxy, see http://docs.brightcove.com/en/perform/oauth-api/guides/quick-start.html");
+            res.end("Your request cannot be processed; this proxy only handles requests originating from a local web server. If you would like to build your own version of this proxy, see http://docs.brightcove.com/en/perform/oauth-api/guides/quick-start.html");
         }
         req.on("data", function (chunk) {
             body += chunk;
@@ -159,6 +159,6 @@ var BCLSPROXY = (function () {
             });
         });
     // change the following line to have the proxy listen for requests on a different port
-    }).listen(8002);
-    util.puts("http server ".blue + "started ".green.bold + "on port ".blue + "8002 ".yellow);
+}).listen(8003);
+    util.puts("http server ".blue + "started ".green.bold + "on port ".blue + "8003".yellow);
 })();
