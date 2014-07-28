@@ -10,7 +10,7 @@
  *       client_id // (get from the Brightcove OAuth UI in Studio)
  *       client_secret // (get from the Brightcove OAuth UI in Studio)
  *       url // the full url for the API call you want to make, including parameters
- *       requestType // (optional, default = GET) GET | POST | PUT | PATCH | DELETE
+ *       requestType // (optional default = GET) GET | POST | PUT | PATCH | DELETE
  *       requestBody // (optional) request body for calls that submit data
  *
  * Note: this is a sample only, not a supported Brightcove plugin
@@ -19,9 +19,7 @@
  */
 var BCLSPROXY = (function () {
     "use strict";
-    var util = require("util"),
-        colors = require("colors"),
-        http = require("http"),
+    var http = require("http"),
         request = require("request"),
         // functions
         getFormValues,
@@ -38,7 +36,7 @@ var BCLSPROXY = (function () {
             i,
             item,
             error = null;
-        // initialize requestType to GET, other options to null
+        // default the requestType to GET, other options to null
         options.url = null;
         options.client_id = null;
         options.client_secret = null;
@@ -53,8 +51,8 @@ var BCLSPROXY = (function () {
         // decode the URL
         options.url = decodeURIComponent(options.url);
         // check for required values
-        if (options.client_id === null || options.client_secret === null) {
-            error = "Error: client_id and client_secret are required!";
+        if (options.client_id === null || options.client_secret === null || options.url === null) {
+            error = "Error: client_id, client_secret, and url for API request are required!";
         }
         if (error === null) {
             callback(null, options);
@@ -69,6 +67,7 @@ var BCLSPROXY = (function () {
         // base64 encode the ciient_id:client_secret string for basic auth
         var auth_string = new Buffer(options.client_id + ":" + options.client_secret).toString("base64"),
             bodyObj;
+        // send the request for an access token
         request({
             method: 'POST',
             url: 'https://oauth.brightcove.com/v3/access_token',
@@ -80,10 +79,11 @@ var BCLSPROXY = (function () {
         }, function (error, response, body) {
             // check for errors
             if (error === null) {
-                // return the access token to the callback
+                // success: return the access token to the callback
                 bodyObj = JSON.parse(body);
                 callback(null, bodyObj.access_token);
             } else {
+                // fail: return the error from the OAuth service
                 callback(error);
             }
         });
@@ -92,6 +92,7 @@ var BCLSPROXY = (function () {
      * sends the request to the targeted API
      */
     sendRequest = function (token, options, callback) {
+        // set the API request options
         var requestOptions = {
                 method: options.requestType,
                 url: options.url,
@@ -101,11 +102,14 @@ var BCLSPROXY = (function () {
                 },
                 body: options.requestBody
             };
+        // send the API request
         request(requestOptions, function (error, response, body) {
             console.log("error", error);
             if (error === null) {
+                // success: return the headers and body
                 callback(null, response.headers, body);
             } else {
+                // fail: return the erro
                 callback(error);
             }
         });
@@ -127,34 +131,43 @@ var BCLSPROXY = (function () {
             body += chunk;
         });
         req.on("end", function () {
+            // process the request body to extract the data into an object
             getFormValues(body, function (error, options) {
                 if (error === null) {
+                    // get the access token
                     getAccessToken(options, function (error, token) {
                         if (error === null) {
+                            // we have a token; send the API request
                             sendRequest(token, options, function (error, headers, body) {
                                 if (error === null) {
-                                    console.log("headers", headers);
+                                    console.log("response headers", headers);
                                     var header;
+                                    // return whatever headers the API response sent
                                     for (header in headers) {
                                         res.setHeader(header, headers[header]);
                                     }
+                                    // optional - prettify JSON responses
                                     if (body.indexOf("{") === 0 || options.url.indexOf("format=json") > -1) {
                                         // prettify JSON
                                         body = JSON.stringify(JSON.parse(body), true, 2);
                                     }
+                                        // send the response headers and body from the API request
                                         res.writeHead(200);
                                         res.end(body);
                                 } else {
+                                    // the API call failed - return the error
                                     res.writeHead(500);
                                     res.end("Your API call was unsuccessful; here is what the server returned: " + error);
                                 }
                             });
                         } else {
+                            // couldn't get an access token - return the error
                             res.writeHead(500);
                             res.end("There was a problem getting your access token: " + error);
                         }
                     });
                 } else {
+                    // request did not contain the necessary data - return the error
                     res.writeHead(500);
                     res.end("There was a problem with your request: " + error);
                 }
@@ -162,5 +175,4 @@ var BCLSPROXY = (function () {
         });
     // change the following line to have the proxy listen for requests on a different port
 }).listen(8003);
-    util.puts("http server ".blue + "started ".green.bold + "on port ".blue + "8003".yellow);
 })();
