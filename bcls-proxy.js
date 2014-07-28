@@ -10,7 +10,7 @@
  *       client_id // (get from the Brightcove OAuth UI in Studio)
  *       client_secret // (get from the Brightcove OAuth UI in Studio)
  *       url // the full url for the API call you want to make, including parameters
- *       requestType // GET | POST | PUT | PATCH | DELETE
+ *       requestType // (optional, default = GET) GET | POST | PUT | PATCH | DELETE
  *       requestBody // (optional) request body for calls that submit data
  *
  * Note: this is a sample only, not a supported Brightcove plugin
@@ -38,11 +38,12 @@ var BCLSPROXY = (function () {
             i,
             item,
             error = null;
-        // initialize options to null
+        // initialize requestType to GET, other options to null
         options.url = null;
         options.client_id = null;
         options.client_secret = null;
         options.requestBody = null;
+        options.requestType = "GET";
         // now split each item into key and value and store in the object
         for (i = 0; i < max; i = i + 1) {
             item = valuesArray[i].split("=");
