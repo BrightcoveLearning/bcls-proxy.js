@@ -114,6 +114,7 @@ var BCLSPROXY = (function () {
      */
     http.createServer(function (req, res) {
         var body = "";
+        console.log("headers", req.headers);
         // this version of this proxy accepts requests only from domains that include "localhost"
         // modify the following line to take requests from other domains
         // or remove the if block to accept requests from any domain (not recommended!)
